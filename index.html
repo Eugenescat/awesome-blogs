@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LLM Frontline Blogs</title>
+    <style>
+      :root {
+        --bg: #0b1020;
+        --panel: #121a30;
+        --card: #18223f;
+        --text: #ecf2ff;
+        --muted: #aab7d8;
+        --accent: #7aa2ff;
+        --accent-2: #9e7bff;
+        --border: rgba(173, 191, 255, 0.2);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+          "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+        color: var(--text);
+        background:
+          radial-gradient(1200px 500px at 10% -10%, rgba(122, 162, 255, 0.25), transparent 60%),
+          radial-gradient(900px 500px at 100% 0%, rgba(158, 123, 255, 0.2), transparent 60%),
+          var(--bg);
+      }
+
+      .wrap {
+        width: min(1000px, 92vw);
+        margin: 0 auto;
+        padding: 56px 0 72px;
+      }
+
+      .header {
+        margin-bottom: 28px;
+      }
+
+      .eyebrow {
+        display: inline-block;
+        padding: 6px 10px;
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        font-size: 12px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--muted);
+        background: rgba(18, 26, 48, 0.55);
+      }
+
+      h1 {
+        margin: 14px 0 10px;
+        font-size: clamp(28px, 4vw, 42px);
+        line-height: 1.15;
+      }
+
+      .subtitle {
+        margin: 0;
+        color: var(--muted);
+        max-width: 70ch;
+        line-height: 1.7;
+      }
+
+      .grid {
+        margin-top: 28px;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 18px;
+      }
+
+      .card {
+        background: linear-gradient(160deg, rgba(24, 34, 63, 0.95), rgba(18, 26, 48, 0.95));
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        box-shadow: 0 12px 28px rgba(5, 8, 18, 0.45);
+      }
+
+      .name {
+        margin: 0;
+        font-size: 22px;
+        letter-spacing: 0.01em;
+      }
+
+      .tag {
+        align-self: flex-start;
+        border-radius: 999px;
+        padding: 5px 10px;
+        background: rgba(122, 162, 255, 0.12);
+        border: 1px solid rgba(122, 162, 255, 0.28);
+        color: #dce6ff;
+        font-size: 12px;
+      }
+
+      .desc {
+        margin: 0;
+        color: var(--muted);
+        line-height: 1.7;
+        flex: 1;
+      }
+
+      .actions {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .link {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        text-decoration: none;
+        color: #0b1020;
+        background: linear-gradient(90deg, var(--accent), var(--accent-2));
+        border-radius: 10px;
+        padding: 10px 14px;
+        font-weight: 600;
+        transition: transform 0.15s ease, opacity 0.15s ease;
+      }
+
+      .link:hover {
+        transform: translateY(-1px);
+        opacity: 0.95;
+      }
+
+      .site-url {
+        color: #8ea3d8;
+        font-size: 12px;
+        word-break: break-all;
+      }
+
+      footer {
+        margin-top: 26px;
+        color: #7f90bc;
+        font-size: 13px;
+      }
+
+      @media (max-width: 620px) {
+        .wrap {
+          padding-top: 40px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="wrap">
+      <header class="header">
+        <span class="eyebrow">LLM Frontline Blogs</span>
+        <h1>前沿 LLM 学者 / 开发者博客导航</h1>
+        <p class="subtitle">
+          聚合值得长期关注的技术博客，覆盖模型架构、训练实践、推理优化与研究思考。当前先收录两位高质量作者，后续可继续扩展。
+        </p>
+      </header>
+
+      <section class="grid" aria-label="blog cards">
+        <article class="card">
+          <span class="tag">Research + Engineering</span>
+          <h2 class="name">Sebastian Raschka</h2>
+          <p class="desc">
+            聚焦 LLM 架构对比、推理时扩展、训练与评测方法，文章通常包含可执行思路和系统化梳理，适合追踪开源 LLM 最新趋势。
+          </p>
+          <div class="actions">
+            <a class="link" href="https://sebastianraschka.com/blog/" target="_blank" rel="noreferrer noopener">
+              Visit Blog
+            </a>
+          </div>
+          <div class="site-url">https://sebastianraschka.com/blog/</div>
+        </article>
+
+        <article class="card">
+          <span class="tag">Practical + Intuition</span>
+          <h2 class="name">Andrej Karpathy</h2>
+          <p class="desc">
+            以“从零实现 + 直觉解释”著称，常见极简代码与工程洞见并重的内容，适合理解模型原理、训练细节与开发者思维方式。
+          </p>
+          <div class="actions">
+            <a class="link" href="https://karpathy.github.io/" target="_blank" rel="noreferrer noopener">
+              Visit Blog
+            </a>
+          </div>
+          <div class="site-url">https://karpathy.github.io/</div>
+        </article>
+      </section>
+
+      <footer>
+        Tips: 可继续新增更多卡片，例如链接到论文列表、GitHub、或代表作文章。
+      </footer>
+    </main>
+  </body>
+</html>
