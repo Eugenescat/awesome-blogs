@@ -111,6 +111,8 @@
       .actions {
         display: flex;
         align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
         gap: 10px;
       }
 
@@ -136,6 +138,49 @@
         color: #8ea3d8;
         font-size: 12px;
         word-break: break-all;
+      }
+
+      .vote-controls {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .vote-btn {
+        border: 1px solid rgba(173, 191, 255, 0.35);
+        background: rgba(122, 162, 255, 0.08);
+        color: var(--text);
+        border-radius: 8px;
+        padding: 7px 10px;
+        cursor: pointer;
+        font-size: 13px;
+        line-height: 1;
+      }
+
+      .vote-btn:hover {
+        background: rgba(122, 162, 255, 0.16);
+      }
+
+      .vote-btn.active {
+        border-color: rgba(158, 123, 255, 0.65);
+        background: rgba(158, 123, 255, 0.2);
+      }
+
+      .vote-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
+      .score-badge {
+        display: none;
+        min-width: 84px;
+        text-align: center;
+        font-size: 12px;
+        color: #d7e2ff;
+        border: 1px solid rgba(173, 191, 255, 0.25);
+        border-radius: 999px;
+        padding: 6px 10px;
+        background: rgba(18, 26, 48, 0.5);
       }
 
       footer {
@@ -332,8 +377,174 @@
       </section>
 
       <footer>
-        Tips: 下一步可加入筛选标签（如 Research / Engineering / Evals）和搜索框，提升导航效率。
+        Tips: 现已支持 up/down 投票、撤销投票和按得分自动排序（需在脚本中填入 Firebase Web 配置并启用匿名登录 + Firestore）。
       </footer>
     </main>
+
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+      import {
+        getFirestore,
+        collection,
+        doc,
+        onSnapshot,
+        setDoc,
+        deleteDoc,
+        serverTimestamp
+      } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+      import {
+        getAuth,
+        signInAnonymously,
+        onAuthStateChanged
+      } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+
+      const firebaseConfig = {
+        apiKey: "AIzaSyDHtsrDYRjloapv093hRGRpRNQt9uH4URI",
+        authDomain: "awesome-blogs-fb1c4.firebaseapp.com",
+        projectId: "awesome-blogs-fb1c4",
+        storageBucket: "awesome-blogs-fb1c4.firebasestorage.app",
+        messagingSenderId: "161449040239",
+        appId: "1:161449040239:web:d0bb0e57c567a33169b09a",
+        measurementId: "G-1QBX7MN0C5"
+      };
+
+      const isConfigured = firebaseConfig.apiKey !== "REPLACE_ME";
+      const gridEl = document.querySelector(".grid");
+      const cardEls = Array.from(document.querySelectorAll(".grid .card"));
+      const cardState = [];
+
+      const toBlogId = (value) =>
+        value
+          .toLowerCase()
+          .replace(/^https?:\/\//, "")
+          .replace(/[^a-z0-9]+/g, "-")
+          .replace(/^-+|-+$/g, "")
+          .slice(0, 96);
+
+      const reorderCards = () => {
+        cardState
+          .sort((a, b) => (b.score - a.score) || (a.index - b.index))
+          .forEach((item) => gridEl.appendChild(item.card));
+      };
+
+      const setVoteUi = (item) => {
+        item.upBtn.classList.toggle("active", item.userVote === 1);
+        item.downBtn.classList.toggle("active", item.userVote === -1);
+        item.scoreEl.textContent = `Score ${item.score}  |  ${item.up}/${item.down}`;
+      };
+
+      const buildVoteUi = (card) => {
+        const actions = card.querySelector(".actions");
+        const wrapper = document.createElement("div");
+        wrapper.className = "vote-controls";
+
+        const upBtn = document.createElement("button");
+        upBtn.className = "vote-btn";
+        upBtn.type = "button";
+        upBtn.textContent = "▲ Up";
+
+        const downBtn = document.createElement("button");
+        downBtn.className = "vote-btn";
+        downBtn.type = "button";
+        downBtn.textContent = "▼ Down";
+
+        const scoreEl = document.createElement("span");
+        scoreEl.className = "score-badge";
+        scoreEl.textContent = "Score 0  |  0/0";
+
+        wrapper.append(upBtn, downBtn, scoreEl);
+        actions.appendChild(wrapper);
+        return { upBtn, downBtn, scoreEl };
+      };
+
+      cardEls.forEach((card, index) => {
+        const urlText = card.querySelector(".site-url")?.textContent?.trim() ?? `blog-${index}`;
+        const blogId = toBlogId(urlText);
+        card.dataset.blogId = blogId;
+
+        const ui = buildVoteUi(card);
+        cardState.push({
+          card,
+          blogId,
+          index,
+          userVote: 0,
+          up: 0,
+          down: 0,
+          score: 0,
+          ...ui
+        });
+      });
+
+      if (!isConfigured) {
+        cardState.forEach((item) => {
+          item.upBtn.disabled = true;
+          item.downBtn.disabled = true;
+          item.scoreEl.textContent = "Vote disabled (set firebaseConfig)";
+        });
+      } else {
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        signInAnonymously(auth).catch((error) => {
+          console.error("Anonymous sign-in failed:", error);
+        });
+
+        onAuthStateChanged(auth, (user) => {
+          if (!user) return;
+          const uid = user.uid;
+
+          cardState.forEach((item) => {
+            const voteDocRef = doc(db, `blogs/${item.blogId}/votes/${uid}`);
+            const votesColRef = collection(db, `blogs/${item.blogId}/votes`);
+
+            onSnapshot(voteDocRef, (voteSnap) => {
+              item.userVote = voteSnap.exists() ? voteSnap.data().value : 0;
+              setVoteUi(item);
+            });
+
+            onSnapshot(votesColRef, (snap) => {
+              let up = 0;
+              let down = 0;
+              snap.forEach((voteDoc) => {
+                const value = voteDoc.data().value;
+                if (value === 1) up += 1;
+                if (value === -1) down += 1;
+              });
+              item.up = up;
+              item.down = down;
+              item.score = up - down;
+              setVoteUi(item);
+              reorderCards();
+            });
+
+            const submitVote = async (nextVote) => {
+              const currentVote = item.userVote || 0;
+              item.upBtn.disabled = true;
+              item.downBtn.disabled = true;
+              try {
+                if (currentVote === nextVote) {
+                  // Click same button again to revoke vote.
+                  await deleteDoc(voteDocRef);
+                } else {
+                  await setDoc(voteDocRef, {
+                    value: nextVote,
+                    updatedAt: serverTimestamp()
+                  });
+                }
+              } catch (error) {
+                console.error("Vote submit failed:", error);
+              } finally {
+                item.upBtn.disabled = false;
+                item.downBtn.disabled = false;
+              }
+            };
+
+            item.upBtn.addEventListener("click", () => submitVote(1));
+            item.downBtn.addEventListener("click", () => submitVote(-1));
+          });
+        });
+      }
+    </script>
   </body>
 </html>
